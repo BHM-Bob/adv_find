@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdvancedFind</title>
+  <link rel="stylesheet" href="search.css">
+</head>
+<body>
+  <div class="advanced-find-container">
+    <div class="search-input-container">
+      <input type="text" id="search-input" placeholder="输入搜索内容" autocomplete="off">
+    </div>
+    <div class="search-controls">
+      <button id="case-sensitive-btn" title="大小写匹配">Aa</button>
+      <button id="whole-word-btn" title="全字匹配">W</button>
+      <button id="regex-btn" title="正则表达式">.*</button>
+      <button id="test-mode-btn" title="测试模式">T</button>
+    </div>
+    <div class="search-navigation">
+      <button id="prev-btn" title="上一个匹配项">▲</button>
+      <span id="match-info">0/0</span>
+      <button id="next-btn" title="下一个匹配项">▼</button>
+    </div>
+    <button id="close-btn" title="关闭">×</button>
+  </div>
+  <script src="search.js"></script>
+</body>
+</html>

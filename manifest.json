@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "AdvancedFind",
+  "version": "1.0",
+  "description": "对网页文字进行高级搜索，扩展浏览器自带的简单搜索，实现VSCode的高级搜索。",
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.svg",
+      "32": "images/icon32.svg",
+      "48": "images/icon48.svg",
+      "128": "images/icon128.svg"
+    },
+    "default_popup": "search.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "images/icon16.svg",
+    "32": "images/icon32.svg",
+    "48": "images/icon48.svg",
+    "128": "images/icon128.svg"
+  },
+  "web_accessible_resources": []
+}
