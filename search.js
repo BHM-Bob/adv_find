@@ -5,8 +5,7 @@ const searchState = {
   wholeWord: false,
   regex: false,
   matches: [],
-  currentMatchIndex: -1,
-  testMode: false // 测试模式标志，默认为关闭
+  currentMatchIndex: -1
 };
 
 // 初始化搜索界面
@@ -28,11 +27,7 @@ function initializeSearchUI() {
     wholeWordBtn.addEventListener('click', () => toggleSearchOption('wholeWord', wholeWordBtn));
     regexBtn.addEventListener('click', () => toggleSearchOption('regex', regexBtn));
     
-    // 获取并绑定测试模式按钮
-    const testModeBtn = document.getElementById('test-mode-btn');
-    if (testModeBtn) {
-      testModeBtn.addEventListener('click', () => toggleSearchOption('testMode', testModeBtn));
-    }
+    // 测试模式按钮已移除
     prevBtn.addEventListener('click', () => navigateMatches(-1));
     nextBtn.addEventListener('click', () => navigateMatches(1));
     closeBtn.addEventListener('click', () => window.close());
@@ -152,23 +147,7 @@ function performSearch() {
     return;
   }
   
-  // 简单的搜索结果测试 - 直接返回测试数据
-  const testMode = searchState.testMode || false; // 从搜索状态获取测试模式设置
-  console.log('AdvancedFind: 测试模式:', testMode);
-  
-  if (testMode) {
-    console.log('AdvancedFind: 测试模式 - 直接返回测试数据');
-    // 创建测试匹配项
-    const testMatches = [
-      { index: 10, text: searchState.searchTerm + ' - 测试匹配1' },
-      { index: 20, text: searchState.searchTerm + ' - 测试匹配2' },
-      { index: 30, text: searchState.searchTerm + ' - 测试匹配3' }
-    ];
-    
-    // 处理测试结果
-    processSearchResults(testMatches);
-    return;
-  }
+  // 移除了测试模式相关代码
   
   // 获取当前活动标签页
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -260,13 +239,21 @@ function performSearch() {
                 let regexPattern;
                 
                 if (regex) {
-                  regexPattern = new RegExp(searchTerm, caseSensitive ? 'g' : 'gi');
+                  // 正则表达式模式 - 正确应用大小写匹配标志
+                  console.log('AdvancedFind: 正则表达式搜索模式 - 大小写敏感:', caseSensitive);
+                  // 确保正确设置正则表达式标志
+                  const flags = caseSensitive ? 'g' : 'gi';
+                  regexPattern = new RegExp(searchTerm, flags);
                 } else {
+                  // 普通文本搜索 - 正确应用大小写匹配标志
                   let escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                   if (wholeWord) {
                     escapedTerm = '\\b' + escapedTerm + '\\b';
                   }
-                  regexPattern = new RegExp(escapedTerm, caseSensitive ? 'g' : 'gi');
+                  console.log('AdvancedFind: 普通文本搜索模式 - 大小写敏感:', caseSensitive);
+                  // 确保正确设置正则表达式标志
+                  const flags = caseSensitive ? 'g' : 'gi';
+                  regexPattern = new RegExp(escapedTerm, flags);
                 }
                 
                 while ((match = regexPattern.exec(text)) !== null) {
@@ -561,20 +548,24 @@ function findMatchesInText(textNode, searchTerm, caseSensitive, wholeWord, regex
     let regexString = '';
     
     if (regex) {
-      // 正则表达式模式
-      console.log('AdvancedFind: findMatchesInText - 使用正则表达式搜索:', searchTerm);
+      // 正则表达式模式 - 正确应用大小写匹配标志
+      console.log('AdvancedFind: findMatchesInText - 使用正则表达式搜索:', searchTerm, '大小写敏感:', caseSensitive);
       regexString = searchTerm;
-      regexPattern = new RegExp(searchTerm, caseSensitive ? 'g' : 'gi');
+      // 确保正确设置正则表达式标志
+      const flags = caseSensitive ? 'g' : 'gi';
+      regexPattern = new RegExp(searchTerm, flags);
     } else {
-      // 普通文本搜索
+      // 普通文本搜索 - 正确应用大小写匹配标志
       let escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       if (wholeWord) {
         escapedTerm = '\\b' + escapedTerm + '\\b';
         console.log('AdvancedFind: findMatchesInText - 启用全词匹配');
       }
       regexString = escapedTerm;
-      regexPattern = new RegExp(escapedTerm, caseSensitive ? 'g' : 'gi');
-      console.log('AdvancedFind: findMatchesInText - 构建的正则表达式:', regexString);
+      // 确保正确设置正则表达式标志
+      const flags = caseSensitive ? 'g' : 'gi';
+      regexPattern = new RegExp(escapedTerm, flags);
+      console.log('AdvancedFind: findMatchesInText - 构建的正则表达式:', regexString, '大小写敏感:', caseSensitive);
     }
     
     // 检查文本是否包含搜索词（简单检查，用于调试）
@@ -740,9 +731,9 @@ function navigateMatches(direction) {
       `
     }, () => {
       // 然后执行更新活动高亮的脚本
-      chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        func: function(prevIndex, newIndex, matches) {
+          chrome.scripting.executeScript({
+            target: { tabId: tabId },
+            func: function(prevIndex, newIndex, matches, caseSensitive) {
           // 清除所有现有高亮
           const existingHighlights = document.querySelectorAll('.advanced-find-highlight');
           existingHighlights.forEach(highlight => {
@@ -777,8 +768,10 @@ function navigateMatches(direction) {
               let regexPattern;
               const searchTerm = matches[newIndex].text;
               
-              // 创建正则表达式（简单匹配，忽略大小写和全词匹配以确保找到）
-              regexPattern = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+              // 创建正则表达式，根据caseSensitive参数决定是否忽略大小写
+              console.log('AdvancedFind: 导航匹配项 - 大小写敏感:', caseSensitive);
+              const flags = caseSensitive ? 'g' : 'gi';
+              regexPattern = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
               
               let match;
               while ((match = regexPattern.exec(node.textContent)) !== null) {
@@ -857,7 +850,7 @@ function navigateMatches(direction) {
             console.error('AdvancedFind: 创建高亮并滚动失败:', error);
           }
         },
-        args: [currentMatchIndex, newIndex, matches]
+        args: [currentMatchIndex, newIndex, matches, searchState.caseSensitive]
       });
     });
   });
