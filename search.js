@@ -75,29 +75,7 @@ function beforeSearch() {
     return false;
   }
   
-  // 短搜索词提示
-  // if (!searchState.regex && searchState.searchTerm.length < 2 && !searchState.wholeWord) {
-    // // 显示通知给用户
-    // if (chrome.notifications) {
-    //   chrome.notifications.create({
-    //     type: 'basic',
-    //     iconUrl: '/images/icon128.png',
-    //     title: '搜索提示',
-    //     message: '搜索词太短可能会导致大量匹配结果，建议使用更长的搜索词或启用全词匹配。'
-    //   });
-      
-    //   // 5秒后自动关闭通知
-    //   setTimeout(() => {
-    //     chrome.notifications.getAll((notifications) => {
-    //       for (let id in notifications) {
-    //         if (notifications[id].title === '搜索提示') {
-    //           chrome.notifications.clear(id);
-    //         }
-    //       }
-    //     });
-    //   }, 5000);
-    // }
-  // }
+  // 短搜索词提示已移除
   
   return true;
 }
