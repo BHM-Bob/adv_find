@@ -214,38 +214,61 @@ function performSearch() {
               let match;
               
               try {
-                let regexPattern;
-                
-                if (regex) {
-                  // 正则表达式模式 - 正确应用大小写匹配标志
-                  console.log('AdvancedFind: 正则表达式搜索模式 - 大小写敏感:', caseSensitive);
-                  // 确保正确设置正则表达式标志
-                  const flags = caseSensitive ? 'g' : 'gi';
-                  regexPattern = new RegExp(searchTerm, flags);
-                } else {
-                  // 普通文本搜索 - 正确应用大小写匹配标志
-                  let escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                  if (wholeWord) {
-                    escapedTerm = '\\b' + escapedTerm + '\\b';
-                  }
-                  console.log('AdvancedFind: 普通文本搜索模式 - 大小写敏感:', caseSensitive);
-                  // 确保正确设置正则表达式标志
-                  const flags = caseSensitive ? 'g' : 'gi';
-                  regexPattern = new RegExp(escapedTerm, flags);
-                }
-                
-                while ((match = regexPattern.exec(text)) !== null) {
-                  matches.push({
-                    index: match.index,
-                    text: match[0]
-                  });
+                // 对于普通搜索（非正则、非全词），使用更高效的indexOf方法
+                if (!regex && !wholeWord) {
+                  console.log('AdvancedFind: 使用indexOf方法进行普通文本搜索');
+                  let searchText = searchTerm;
+                  let textToSearch = text;
                   
-                  if (match.index === regexPattern.lastIndex) {
-                    regexPattern.lastIndex++;
+                  // 处理大小写不敏感的情况
+                  if (!caseSensitive) {
+                    searchText = searchText.toLowerCase();
+                    textToSearch = textToSearch.toLowerCase();
+                  }
+                  
+                  let pos = 0;
+                  while ((pos = textToSearch.indexOf(searchText, pos)) !== -1) {
+                    // 注意：对于大小写不敏感的搜索，需要获取原始文本中的实际内容
+                    const originalMatchText = text.substring(pos, pos + searchTerm.length);
+                    matches.push({
+                      index: pos,
+                      text: originalMatchText
+                    });
+                    pos += searchText.length;
+                  }
+                } else {
+                  // 对于正则搜索或全词匹配，使用正则表达式
+                  let regexPattern;
+                  
+                  if (regex) {
+                    // 正则表达式模式 - 正确应用大小写匹配标志
+                    console.log('AdvancedFind: 正则表达式搜索模式 - 大小写敏感:', caseSensitive);
+                    // 确保正确设置正则表达式标志
+                    const flags = caseSensitive ? 'g' : 'gi';
+                    regexPattern = new RegExp(searchTerm, flags);
+                  } else {
+                    // 全词匹配的普通文本搜索
+                    let escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    escapedTerm = '\\b' + escapedTerm + '\\b';
+                    console.log('AdvancedFind: 全词匹配搜索模式 - 大小写敏感:', caseSensitive);
+                    // 确保正确设置正则表达式标志
+                    const flags = caseSensitive ? 'g' : 'gi';
+                    regexPattern = new RegExp(escapedTerm, flags);
+                  }
+                  
+                  while ((match = regexPattern.exec(text)) !== null) {
+                    matches.push({
+                      index: match.index,
+                      text: match[0]
+                    });
+                    
+                    if (match.index === regexPattern.lastIndex) {
+                      regexPattern.lastIndex++;
+                    }
                   }
                 }
               } catch (error) {
-                console.error('AdvancedFind: 正则表达式错误:', error);
+                console.error('AdvancedFind: 搜索过程错误:', error);
               }
               
               return matches;
