@@ -4,6 +4,7 @@ const searchState = {
   caseSensitive: false,
   wholeWord: false,
   regex: false,
+  realtimeSearch: false, // 默认不实时搜索
   matches: [],
   currentMatchIndex: -1
 };
@@ -16,6 +17,8 @@ function initializeSearchUI() {
     const caseSensitiveBtn = document.getElementById('case-sensitive-btn');
     const wholeWordBtn = document.getElementById('whole-word-btn');
     const regexBtn = document.getElementById('regex-btn');
+    const realtimeSearchBtn = document.getElementById('realtime-search-btn');
+    const searchBtn = document.getElementById('search-btn');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const matchInfo = document.getElementById('match-info');
@@ -26,16 +29,21 @@ function initializeSearchUI() {
     caseSensitiveBtn.addEventListener('click', () => toggleSearchOption('caseSensitive', caseSensitiveBtn));
     wholeWordBtn.addEventListener('click', () => toggleSearchOption('wholeWord', wholeWordBtn));
     regexBtn.addEventListener('click', () => toggleSearchOption('regex', regexBtn));
+    realtimeSearchBtn.addEventListener('click', () => toggleSearchOption('realtimeSearch', realtimeSearchBtn));
+    searchBtn.addEventListener('click', performSearch);
     
     // 测试模式按钮已移除
     prevBtn.addEventListener('click', () => navigateMatches(-1));
     nextBtn.addEventListener('click', () => navigateMatches(1));
     closeBtn.addEventListener('click', () => window.close());
     
-    // 监听ESC键关闭
+    // 监听ESC键关闭和Enter键执行搜索
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         window.close();
+      } else if (e.key === 'Enter' && !searchState.realtimeSearch) {
+        // 在非实时搜索模式下，按Enter键执行搜索
+        performSearch();
       }
     });
     
@@ -52,14 +60,22 @@ function initializeSearchUI() {
 // 处理搜索输入
 function handleSearchInput(e) {
   searchState.searchTerm = e.target.value;
-  performSearch();
+  
+  // 只有在启用实时搜索时才自动执行搜索
+  if (searchState.realtimeSearch) {
+    performSearch();
+  }
 }
 
 // 切换搜索选项
 function toggleSearchOption(option, button) {
   searchState[option] = !searchState[option];
   button.classList.toggle('active', searchState[option]);
-  performSearch();
+  
+  // 对于实时搜索选项，不需要立即执行搜索
+  if (option !== 'realtimeSearch') {
+    performSearch();
+  }
 }
 
 // 执行搜索前先清理
