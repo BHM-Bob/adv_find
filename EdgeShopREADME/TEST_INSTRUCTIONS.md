@@ -2,7 +2,7 @@
 
 ## 基本信息
 扩展名称: AdvancedFind
-版本: 1.0
+版本: 1.1
 功能概述: 一个增强浏览器搜索功能的工具，提供类似VSCode的高级搜索体验。
 
 ## 测试环境
@@ -74,7 +74,7 @@
 
 ## Basic Information
 Extension Name: AdvancedFind
-Version: 1.0
+Version: 1.1
 Function Overview: A tool that enhances browser search functionalities, providing an advanced search experience similar to VSCode.
 
 ## Testing Environment

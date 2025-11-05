@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AdvancedFind",
-  "version": "1.0",
-  "description": "对网页文字进行高级搜索，扩展浏览器自带的简单搜索，实现VSCode的高级搜索。",
+  "version": "1.1",
+  "description": "对网页文字进行高级搜索，大小写匹配/全字符匹配/正则表达式 | Search Text on Webpage, Case Sensitive/Whole Word/Regex",
   "action": {
     "default_icon": {
       "16": "images/icon16.png",
