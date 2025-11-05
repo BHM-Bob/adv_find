@@ -37,13 +37,20 @@ function initializeSearchUI() {
     nextBtn.addEventListener('click', () => navigateMatches(1));
     closeBtn.addEventListener('click', () => window.close());
     
-    // 监听ESC键关闭和Enter键执行搜索
+    // 监听ESC键关闭、Enter键执行搜索和上下方向键导航结果
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         window.close();
       } else if (e.key === 'Enter' && !searchState.realtimeSearch) {
         // 在非实时搜索模式下，按Enter键执行搜索
         performSearch();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        // 当有搜索结果时，使用上下方向键导航结果
+        if (searchState.matches.length > 0) {
+          e.preventDefault(); // 阻止默认行为（移动光标到文本开头/结尾）
+          const direction = e.key === 'ArrowUp' ? -1 : 1;
+          navigateMatches(direction);
+        }
       }
     });
     

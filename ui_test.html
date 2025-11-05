@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdvancedFind UI Test</title>
+  <link rel="stylesheet" href="search.css">
+  <style>
+    body {
+      padding: 20px;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .test-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 600px;
+    }
+    .test-info {
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #e3f2fd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .status.success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status.error {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    .test-content {
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      max-width: 600px;
+    }
+    .highlight {
+      background-color: yellow;
+      font-weight: bold;
+    }
+    .current-match {
+      background-color: orange;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-info">
+      <h3>AdvancedFind UI 测试页面</h3>
+      <p>此页面用于测试UI界面，不包含实际的搜索功能。</p>
+      <ul>
+        <li>🔍 执行搜索按钮：点击执行搜索（在扩展环境中）</li>
+        <li>⚡ 实时搜索按钮：切换实时搜索模式（默认关闭）</li>
+        <li>Enter键：在非实时搜索模式下按Enter键执行搜索</li>
+        <li>↑↓ 方向键：在有搜索结果时，使用上下方向键导航结果</li>
+      </ul>
+    </div>
+    
+    <div class="advanced-find-container">
+      <div class="search-input-container">
+        <input type="text" id="search-input" placeholder="输入搜索内容" autocomplete="off">
+      </div>
+      <div class="search-controls">
+        <button id="case-sensitive-btn" title="大小写匹配">Aa</button>
+        <button id="whole-word-btn" title="全字匹配">W</button>
+        <button id="regex-btn" title="正则表达式">.*</button>
+        <button id="realtime-search-btn" title="实时搜索">⚡</button>
+      </div>
+      <div class="search-actions">
+        <button id="search-btn" title="执行搜索">🔍</button>
+      </div>
+      <div class="search-navigation">
+        <button id="prev-btn" title="上一个匹配项">▲</button>
+        <span id="match-info">0/0</span>
+        <button id="next-btn" title="下一个匹配项">▼</button>
+      </div>
+      <button id="close-btn" title="关闭">×</button>
+    </div>
+    
+    <div id="status" class="status">
+      准备就绪
+    </div>
+    
+    <div class="test-content">
+      <h3>测试文本内容</h3>
+      <p>这是一段用于测试搜索功能的文本。请尝试搜索以下单词：</p>
+      <ul>
+        <li>Enter - 这个单词出现了多次</li>
+        <li>搜索 - 中文搜索测试</li>
+        <li>test - 英文单词测试</li>
+      </ul>
+      <div id="test-text">
+        <p>Enter the world of programming. When you press Enter key, the computer processes your input.</p>
+        <p>Enter是一个常见的计算机术语。每次按下Enter键，都会执行一个命令。</p>
+        <p>This is a test sentence. Another test case is here. Testing is important for quality assurance.</p>
+        <p>搜索功能可以帮助你快速找到需要的内容。搜索是现代应用程序的重要功能。</p>
+        <p>Enter key is different from other keys. When you Enter text, the system processes it.</p>
+        <p>Regular expressions are powerful for text searching. You can search for patterns like Enter, test, or 搜索.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 模拟搜索状态
+    const searchState = {
+      searchTerm: '',
+      caseSensitive: false,
+      wholeWord: false,
+      regex: false,
+      realtimeSearch: false, // 默认不实时搜索
+      matches: [],
+      currentMatchIndex: -1
+    };
+    
+    // 初始化UI
+    function initializeTestUI() {
+      try {
+        // 获取DOM元素
+        const searchInput = document.getElementById('search-input');
+        const caseSensitiveBtn = document.getElementById('case-sensitive-btn');
+        const wholeWordBtn = document.getElementById('whole-word-btn');
+        const regexBtn = document.getElementById('regex-btn');
+        const realtimeSearchBtn = document.getElementById('realtime-search-btn');
+        const searchBtn = document.getElementById('search-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const matchInfo = document.getElementById('match-info');
+        const closeBtn = document.getElementById('close-btn');
+        const status = document.getElementById('status');
+        
+        // 绑定事件监听器
+        searchInput.addEventListener('input', handleSearchInput);
+        caseSensitiveBtn.addEventListener('click', () => toggleSearchOption('caseSensitive', caseSensitiveBtn));
+        wholeWordBtn.addEventListener('click', () => toggleSearchOption('wholeWord', wholeWordBtn));
+        regexBtn.addEventListener('click', () => toggleSearchOption('regex', regexBtn));
+        realtimeSearchBtn.addEventListener('click', () => toggleSearchOption('realtimeSearch', realtimeSearchBtn));
+        searchBtn.addEventListener('click', performSearch);
+        
+        prevBtn.addEventListener('click', () => navigateMatches(-1));
+        nextBtn.addEventListener('click', () => navigateMatches(1));
+        closeBtn.addEventListener('click', () => window.close());
+        
+        // 监听ESC键关闭、Enter键执行搜索和上下方向键导航结果
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            updateStatus('ESC键被按下，在扩展环境中会关闭弹窗', 'success');
+          } else if (e.key === 'Enter' && !searchState.realtimeSearch) {
+            // 在非实时搜索模式下，按Enter键执行搜索
+            performSearch();
+          } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            // 当有搜索结果时，使用上下方向键导航结果
+            if (searchState.matches.length > 0) {
+              e.preventDefault(); // 阻止默认行为（移动光标到文本开头/结尾）
+              const direction = e.key === 'ArrowUp' ? -1 : 1;
+              navigateMatches(direction);
+            }
+          }
+        });
+        
+        // 自动聚焦输入框
+        searchInput.focus();
+        
+        updateStatus('UI初始化成功，所有按钮事件已绑定', 'success');
+      } catch (error) {
+        updateStatus('UI初始化失败: ' + error.message, 'error');
+      }
+    }
+    
+    // 处理搜索输入
+    function handleSearchInput(e) {
+      searchState.searchTerm = e.target.value;
+      
+      // 只有在启用实时搜索时才自动执行搜索
+      if (searchState.realtimeSearch) {
+        performSearch();
+      } else {
+        updateStatus(`输入内容: "${searchState.searchTerm}"，实时搜索已关闭，需点击搜索按钮或按Enter键执行搜索`, 'success');
+      }
+    }
+    
+    // 切换搜索选项
+    function toggleSearchOption(option, button) {
+      searchState[option] = !searchState[option];
+      button.classList.toggle('active', searchState[option]);
+      
+      // 对于实时搜索选项，不需要立即执行搜索
+      if (option !== 'realtimeSearch') {
+        performSearch();
+      } else {
+        const status = searchState.realtimeSearch ? '已开启' : '已关闭';
+        updateStatus(`实时搜索${status}，现在输入内容会自动执行搜索`, 'success');
+      }
+    }
+    
+    // 模拟执行搜索
+    function performSearch() {
+      if (!searchState.searchTerm || searchState.searchTerm.trim() === '') {
+        updateStatus('请输入搜索内容', 'error');
+        return;
+      }
+      
+      // 清除之前的高亮
+      clearHighlights();
+      
+      // 获取测试文本内容
+      const testTextElement = document.getElementById('test-text');
+      const textContent = testTextElement.textContent;
+      
+      // 创建搜索模式
+      let searchPattern;
+      if (searchState.regex) {
+        try {
+          searchPattern = new RegExp(searchState.searchTerm, searchState.caseSensitive ? 'g' : 'gi');
+        } catch (e) {
+          updateStatus('正则表达式错误: ' + e.message, 'error');
+          return;
+        }
+      } else {
+        let escapedTerm = searchState.searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (searchState.wholeWord) {
+          escapedTerm = '\\b' + escapedTerm + '\\b';
+        }
+        searchPattern = new RegExp(escapedTerm, searchState.caseSensitive ? 'g' : 'gi');
+      }
+      
+      // 查找所有匹配项
+      const matches = [];
+      let match;
+      while ((match = searchPattern.exec(textContent)) !== null) {
+        matches.push({
+          index: match.index,
+          text: match[0],
+          length: match[0].length
+        });
+      }
+      
+      // 高亮所有匹配项
+      highlightMatches(testTextElement, matches);
+      
+      // 更新搜索状态
+      searchState.matches = matches;
+      searchState.currentMatchIndex = matches.length > 0 ? 0 : -1;
+      
+      // 如果有匹配项，导航到第一个
+      if (matches.length > 0) {
+        navigateToMatch(0);
+      }
+      
+      updateMatchInfo();
+      updateStatus(`搜索完成，找到 ${matches.length} 个匹配项`, 'success');
+    }
+    
+    // 清除高亮
+    function clearHighlights() {
+      const testTextElement = document.getElementById('test-text');
+      const originalHTML = testTextElement.innerHTML;
+      // 移除所有高亮标记
+      testTextElement.innerHTML = originalHTML
+        .replace(/<span class="highlight">/g, '')
+        .replace(/<span class="current-match">/g, '')
+        .replace(/<\/span>/g, '');
+    }
+    
+    // 高亮匹配项
+    function highlightMatches(element, matches) {
+      if (matches.length === 0) return;
+      
+      let html = element.innerHTML;
+      
+      // 从后往前替换，避免索引变化
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const match = matches[i];
+        const beforeText = html.substring(0, match.index);
+        const matchText = html.substring(match.index, match.index + match.length);
+        const afterText = html.substring(match.index + match.length);
+        
+        // 添加高亮标记
+        html = beforeText + '<span class="highlight">' + matchText + '</span>' + afterText;
+      }
+      
+      element.innerHTML = html;
+    }
+    
+    // 导航到指定匹配项
+    function navigateToMatch(index) {
+      if (index < 0 || index >= searchState.matches.length) return;
+      
+      // 清除当前匹配高亮
+      const currentHighlights = document.querySelectorAll('.current-match');
+      currentHighlights.forEach(el => {
+        el.classList.remove('current-match');
+        el.classList.add('highlight');
+      });
+      
+      // 设置新的当前匹配高亮
+      const allHighlights = document.querySelectorAll('.highlight');
+      if (allHighlights[index]) {
+        allHighlights[index].classList.remove('highlight');
+        allHighlights[index].classList.add('current-match');
+        
+        // 滚动到当前匹配项
+        allHighlights[index].scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }
+    
+    // 导航匹配项
+    function navigateMatches(direction) {
+      if (searchState.matches.length === 0) {
+        updateStatus('没有可导航的匹配项', 'error');
+        return;
+      }
+      
+      searchState.currentMatchIndex = (searchState.currentMatchIndex + direction + searchState.matches.length) % searchState.matches.length;
+      navigateToMatch(searchState.currentMatchIndex);
+      updateMatchInfo();
+      updateStatus(`导航到第 ${searchState.currentMatchIndex + 1} 个匹配项`, 'success');
+    }
+    
+    // 更新匹配信息
+    function updateMatchInfo() {
+      const matchInfo = document.getElementById('match-info');
+      if (matchInfo) {
+        const { matches, currentMatchIndex } = searchState;
+        const current = matches.length > 0 ? (currentMatchIndex + 1) : 0;
+        matchInfo.textContent = `${current}/${matches.length}`;
+      }
+    }
+    
+    // 更新状态信息
+    function updateStatus(message, type = 'success') {
+      const status = document.getElementById('status');
+      if (status) {
+        status.textContent = message;
+        status.className = `status ${type}`;
+      }
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', initializeTestUI);
+  </script>
+</body>
+</html>
