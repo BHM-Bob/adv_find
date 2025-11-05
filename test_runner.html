@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdvancedFind - 测试运行器</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .panel {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #4285f4;
+      padding-bottom: 10px;
+      margin-top: 0;
+    }
+    
+    h2 {
+      color: #555;
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    
+    .search-ui {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .search-input-container {
+      margin-bottom: 15px;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .search-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    button {
+      padding: 8px 12px;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background: #e0e0e0;
+    }
+    
+    button.active {
+      background: #4285f4;
+      color: white;
+      border-color: #4285f4;
+    }
+    
+    .search-navigation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    #match-info {
+      font-weight: bold;
+      min-width: 50px;
+    }
+    
+    .test-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      min-height: 300px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .test-actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .test-actions button {
+      flex: 1;
+      padding: 10px;
+      font-weight: bold;
+    }
+    
+    #run-all-tests {
+      background: #34a853;
+      color: white;
+      border-color: #34a853;
+    }
+    
+    #run-all-tests:hover {
+      background: #2d8f47;
+    }
+    
+    .test-results {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    #results-output {
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      min-height: 100px;
+    }
+    
+    .highlight {
+      background-color: #ffeb3b;
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+    
+    .highlight.active {
+      background-color: #ff9800;
+      color: white;
+    }
+    
+    .success {
+      color: #34a853;
+    }
+    
+    .error {
+      color: #ea4335;
+    }
+    
+    .controls-section {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>AdvancedFind - 测试运行器</h1>
+  
+  <div class="container">
+    <!-- 左侧面板：搜索界面和测试内容 -->
+    <div class="panel">
+      <h2>搜索界面</h2>
+      <div class="search-ui">
+        <div class="search-input-container">
+          <input type="text" id="test-search-input" placeholder="输入搜索内容">
+        </div>
+        <div class="search-controls">
+          <button id="test-case-sensitive-btn" title="大小写匹配">Aa</button>
+          <button id="test-whole-word-btn" title="全字匹配">W</button>
+          <button id="test-regex-btn" title="正则表达式">.*</button>
+        </div>
+        <div class="search-navigation">
+          <button id="test-prev-btn" title="上一个匹配项">▲</button>
+          <span id="test-match-info">0/0</span>
+          <button id="test-next-btn" title="下一个匹配项">▼</button>
+        </div>
+      </div>
+      
+      <h2>测试内容</h2>
+      <div class="test-content" id="test-content">
+        <p>这是一段测试文本，包含search关键词。</p>
+        <p>Another test text with SEARCH keyword in different case.</p>
+        <div>
+          <p>这是第三个段落，也包含search关键词。</p>
+          <p>正则表达式测试：数字123和456，邮箱test@example.com</p>
+        </div>
+        <p>这是一个全词测试，单独的test单词应该被匹配，但contest不应该被匹配。</p>
+        <p>混合大小写测试：Search, SEARCH, seaRCH都应该可以被匹配（当不区分大小写时）。</p>
+        <p>特殊字符测试：包含点号.星号*加号+问号?等正则特殊字符。</p>
+      </div>
+      
+      <div class="test-actions">
+        <button id="run-search">执行搜索</button>
+        <button id="clear-search">清除高亮</button>
+        <button id="run-all-tests">运行所有测试</button>
+      </div>
+      
+      <div class="controls-section">
+        <h2>测试控制</h2>
+        <div>
+          <label><input type="checkbox" id="verbose-log" checked> 显示详细日志</label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 右侧面板：测试结果 -->
+    <div class="panel">
+      <h2>测试结果</h2>
+      <div class="test-results">
+        <pre id="results-output">准备就绪，点击「执行搜索」或「运行所有测试」开始测试。</pre>
+      </div>
+      
+      <h2>测试用例</h2>
+      <div class="test-results">
+        <ol id="test-cases">
+          <li onclick="runTestCase(0)">基本搜索 - 小写search（点击运行此测试）</li>
+          <li onclick="runTestCase(1)">大小写敏感搜索（点击运行此测试）</li>
+          <li onclick="runTestCase(2)">全词匹配搜索（点击运行此测试）</li>
+          <li onclick="runTestCase(3)">正则表达式搜索 - 数字（点击运行此测试）</li>
+          <li onclick="runTestCase(4)">正则表达式搜索 - 邮箱（点击运行此测试）</li>
+          <li onclick="runTestCase(5)">无匹配搜索（点击运行此测试）</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // 重定向console.log到结果区域
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    
+    function logToOutput(message, type = 'log') {
+      const output = document.getElementById('results-output');
+      const timestamp = new Date().toLocaleTimeString();
+      let prefix = '[LOG]';
+      let className = '';
+      
+      switch(type) {
+        case 'error':
+          prefix = '[ERROR]';
+          className = 'error';
+          break;
+        case 'warn':
+          prefix = '[WARN]';
+          break;
+        case 'success':
+          prefix = '[SUCCESS]';
+          className = 'success';
+          break;
+      }
+      
+      const logLine = document.createElement('div');
+      logLine.className = className;
+      logLine.textContent = `${timestamp} ${prefix} ${message}`;
+      
+      output.appendChild(logLine);
+      output.scrollTop = output.scrollHeight;
+      
+      // 保留原始console行为（如果启用详细日志）
+      if (document.getElementById('verbose-log').checked) {
+        if (type === 'error') {
+          originalConsoleError(message);
+        } else if (type === 'warn') {
+          originalConsoleWarn(message);
+        } else {
+          originalConsoleLog(message);
+        }
+      }
+    }
+    
+    // 覆盖console方法
+    console.log = (...args) => logToOutput(args.join(' '), 'log');
+    console.error = (...args) => logToOutput(args.join(' '), 'error');
+    console.warn = (...args) => logToOutput(args.join(' '), 'warn');
+    
+    // 搜索状态
+    const searchState = {
+      searchTerm: '',
+      caseSensitive: false,
+      wholeWord: false,
+      regex: false,
+      matches: [],
+      currentMatchIndex: -1
+    };
+    
+    // 初始化测试界面
+    function initializeTestUI() {
+      // 获取DOM元素
+      const searchInput = document.getElementById('test-search-input');
+      const caseSensitiveBtn = document.getElementById('test-case-sensitive-btn');
+      const wholeWordBtn = document.getElementById('test-whole-word-btn');
+      const regexBtn = document.getElementById('test-regex-btn');
+      const prevBtn = document.getElementById('test-prev-btn');
+      const nextBtn = document.getElementById('test-next-btn');
+      const runSearchBtn = document.getElementById('run-search');
+      const clearSearchBtn = document.getElementById('clear-search');
+      const runAllTestsBtn = document.getElementById('run-all-tests');
+      
+      // 绑定事件监听器
+      searchInput.addEventListener('input', (e) => {
+        searchState.searchTerm = e.target.value;
+      });
+      
+      caseSensitiveBtn.addEventListener('click', () => {
+        searchState.caseSensitive = !searchState.caseSensitive;
+        caseSensitiveBtn.classList.toggle('active', searchState.caseSensitive);
+      });
+      
+      wholeWordBtn.addEventListener('click', () => {
+        searchState.wholeWord = !searchState.wholeWord;
+        wholeWordBtn.classList.toggle('active', searchState.wholeWord);
+      });
+      
+      regexBtn.addEventListener('click', () => {
+        searchState.regex = !searchState.regex;
+        regexBtn.classList.toggle('active', searchState.regex);
+      });
+      
+      runSearchBtn.addEventListener('click', () => {
+        clearHighlights();
+        performTestSearch();
+      });
+      
+      clearSearchBtn.addEventListener('click', () => {
+        clearHighlights();
+        searchState.matches = [];
+        searchState.currentMatchIndex = -1;
+        updateMatchInfo();
+      });
+      
+      runAllTestsBtn.addEventListener('click', runAllTests);
+      
+      prevBtn.addEventListener('click', () => navigateMatches(-1));
+      nextBtn.addEventListener('click', () => navigateMatches(1));
+    }
+    
+    // 获取可见的文本节点
+    function getVisibleTextNodes(element) {
+      const allTextNodes = [];
+      if (!element) return [];
+      
+      try {
+        const treeWalker = document.createTreeWalker(
+          element,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+        
+        let node;
+        while ((node = treeWalker.nextNode())) {
+          if (node.textContent.trim()) {
+            allTextNodes.push(node);
+          }
+        }
+      } catch (error) {
+        console.error('获取文本节点出错:', error);
+      }
+      
+      return allTextNodes;
+    }
+    
+    // 在文本中查找匹配项
+    function findMatchesInText(textNode, searchTerm, caseSensitive, wholeWord, regex) {
+      if (!textNode || !textNode.textContent) return [];
+      
+      const text = textNode.textContent;
+      const matches = [];
+      let match;
+      
+      try {
+        let regexPattern;
+        
+        if (regex) {
+          // 正则表达式模式
+          const flags = caseSensitive ? 'g' : 'gi';
+          regexPattern = new RegExp(searchTerm, flags);
+        } else {
+          // 普通文本搜索
+          let escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          if (wholeWord) {
+            escapedTerm = '\\b' + escapedTerm + '\\b';
+          }
+          const flags = caseSensitive ? 'g' : 'gi';
+          regexPattern = new RegExp(escapedTerm, flags);
+        }
+        
+        while ((match = regexPattern.exec(text)) !== null) {
+          matches.push({
+            index: match.index,
+            text: match[0],
+            node: textNode
+          });
+          
+          // 防止零宽度匹配导致的无限循环
+          if (match.index === regexPattern.lastIndex) {
+            regexPattern.lastIndex++;
+          }
+        }
+      } catch (error) {
+        console.error('正则表达式错误:', error);
+      }
+      
+      return matches;
+    }
+    
+    // 执行测试搜索
+    function performTestSearch() {
+      const { searchTerm, caseSensitive, wholeWord, regex } = searchState;
+      
+      if (!searchTerm.trim()) {
+        console.warn('搜索词不能为空');
+        return;
+      }
+      
+      console.log(`开始搜索: "${searchTerm}"`, {
+        caseSensitive,
+        wholeWord,
+        regex
+      });
+      
+      const startTime = Date.now();
+      const testContent = document.getElementById('test-content');
+      const textNodes = getVisibleTextNodes(testContent);
+      
+      console.log(`找到 ${textNodes.length} 个文本节点`);
+      
+      // 查找所有匹配项
+      const allMatches = [];
+      textNodes.forEach(node => {
+        const nodeMatches = findMatchesInText(node, searchTerm, caseSensitive, wholeWord, regex);
+        allMatches.push(...nodeMatches);
+      });
+      
+      const endTime = Date.now();
+      console.log(`搜索完成，找到 ${allMatches.length} 个匹配项，耗时 ${endTime - startTime}ms`);
+      
+      searchState.matches = allMatches;
+      searchState.currentMatchIndex = -1;
+      
+      // 创建高亮
+      if (allMatches.length > 0) {
+        createHighlights(allMatches);
+        navigateMatches(1); // 默认导航到第一个匹配项
+      }
+      
+      updateMatchInfo();
+    }
+    
+    // 创建高亮
+    function createHighlights(matches) {
+      // 按节点和位置排序匹配项
+      const sortedMatches = [...matches].sort((a, b) => {
+        if (a.node === b.node) {
+          return a.index - b.index;
+        }
+        // 不同节点的排序可能不准确，但对于测试来说足够了
+        return 0;
+      });
+      
+      // 为每个节点单独处理高亮
+      const nodesWithMatches = new Map();
+      sortedMatches.forEach(match => {
+        if (!nodesWithMatches.has(match.node)) {
+          nodesWithMatches.set(match.node, []);
+        }
+        nodesWithMatches.get(match.node).push(match);
+      });
+      
+      // 为每个节点创建高亮
+      nodesWithMatches.forEach((nodeMatches, node) => {
+        const parent = node.parentNode;
+        if (!parent) return;
+        
+        const originalText = node.textContent;
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+        
+        // 按索引排序
+        nodeMatches.sort((a, b) => a.index - b.index);
+        
+        // 创建高亮元素
+        nodeMatches.forEach((match, i) => {
+          const matchIndex = match.index;
+          
+          // 添加匹配前的文本
+          if (matchIndex > lastIndex) {
+            fragment.appendChild(document.createTextNode(originalText.substring(lastIndex, matchIndex)));
+          }
+          
+          // 创建高亮元素
+          const highlightSpan = document.createElement('span');
+          highlightSpan.className = 'highlight';
+          highlightSpan.dataset.matchIndex = match.index;
+          highlightSpan.textContent = match.text;
+          fragment.appendChild(highlightSpan);
+          
+          lastIndex = matchIndex + match.text.length;
+        });
+        
+        // 添加剩余文本
+        if (lastIndex < originalText.length) {
+          fragment.appendChild(document.createTextNode(originalText.substring(lastIndex)));
+        }
+        
+        // 替换原始节点
+        parent.replaceChild(fragment, node);
+      });
+    }
+    
+    // 清除高亮
+    function clearHighlights() {
+      const highlights = document.querySelectorAll('.highlight');
+      highlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        if (parent) {
+          const text = highlight.textContent;
+          const textNode = document.createTextNode(text);
+          parent.replaceChild(textNode, highlight);
+          parent.normalize();
+        }
+      });
+    }
+    
+    // 导航匹配项
+    function navigateMatches(direction) {
+      const { matches, currentMatchIndex } = searchState;
+      
+      if (matches.length === 0) return;
+      
+      // 移除之前的活动状态
+      if (currentMatchIndex >= 0) {
+        const prevHighlight = document.querySelector('.highlight.active');
+        if (prevHighlight) {
+          prevHighlight.classList.remove('active');
+        }
+      }
+      
+      // 计算新索引
+      searchState.currentMatchIndex = (currentMatchIndex + direction + matches.length) % matches.length;
+      const newIndex = searchState.currentMatchIndex;
+      
+      // 查找并激活新的高亮
+      const highlights = document.querySelectorAll('.highlight');
+      if (newIndex < highlights.length) {
+        const newHighlight = highlights[newIndex];
+        newHighlight.classList.add('active');
+        
+        // 滚动到视图
+        newHighlight.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center', 
+          inline: 'center'
+        });
+      }
+      
+      updateMatchInfo();
+    }
+    
+    // 更新匹配信息
+    function updateMatchInfo() {
+      const matchInfo = document.getElementById('test-match-info');
+      const { matches, currentMatchIndex } = searchState;
+      const current = matches.length > 0 ? (currentMatchIndex + 1) : 0;
+      matchInfo.textContent = `${current}/${matches.length}`;
+    }
+    
+    // 测试用例
+    const testCases = [
+      {
+        name: '基本搜索 - 小写search',
+        params: { searchTerm: 'search', caseSensitive: false, wholeWord: false, regex: false },
+        expected: '应该找到所有包含search的匹配项（不区分大小写）'
+      },
+      {
+        name: '大小写敏感搜索',
+        params: { searchTerm: 'search', caseSensitive: true, wholeWord: false, regex: false },
+        expected: '应该只找到小写的search'
+      },
+      {
+        name: '全词匹配搜索',
+        params: { searchTerm: 'test', caseSensitive: false, wholeWord: true, regex: false },
+        expected: '应该只找到完整的test单词'
+      },
+      {
+        name: '正则表达式搜索 - 数字',
+        params: { searchTerm: '\\d+', caseSensitive: false, wholeWord: false, regex: true },
+        expected: '应该找到所有数字序列'
+      },
+      {
+        name: '正则表达式搜索 - 邮箱',
+        params: { searchTerm: '[\\w.-]+@[\\w.-]+\\.\\w+', caseSensitive: false, wholeWord: false, regex: true },
+        expected: '应该找到邮箱地址'
+      },
+      {
+        name: '无匹配搜索',
+        params: { searchTerm: 'nonexistent', caseSensitive: false, wholeWord: false, regex: false },
+        expected: '应该返回空结果'
+      }
+    ];
+    
+    // 运行单个测试用例
+    function runTestCase(index) {
+      if (index < 0 || index >= testCases.length) {
+        console.error('无效的测试用例索引');
+        return;
+      }
+      
+      const testCase = testCases[index];
+      console.log(`\n--- 运行测试用例: ${testCase.name} ---`);
+      console.log(`预期结果: ${testCase.expected}`);
+      
+      // 设置搜索参数
+      searchState.searchTerm = testCase.params.searchTerm;
+      searchState.caseSensitive = testCase.params.caseSensitive;
+      searchState.wholeWord = testCase.params.wholeWord;
+      searchState.regex = testCase.params.regex;
+      
+      // 更新UI
+      document.getElementById('test-search-input').value = testCase.params.searchTerm;
+      document.getElementById('test-case-sensitive-btn').classList.toggle('active', testCase.params.caseSensitive);
+      document.getElementById('test-whole-word-btn').classList.toggle('active', testCase.params.wholeWord);
+      document.getElementById('test-regex-btn').classList.toggle('active', testCase.params.regex);
+      
+      // 清除之前的高亮
+      clearHighlights();
+      
+      // 执行搜索
+      const startTime = Date.now();
+      performTestSearch();
+      const endTime = Date.now();
+      
+      // 验证结果
+      console.log(`测试完成，耗时: ${endTime - startTime}ms`);
+      
+      // 简单验证
+      let testPassed = true;
+      if (testCase.name === '无匹配搜索' && searchState.matches.length !== 0) {
+        testPassed = false;
+      } else if (testCase.name === '大小写敏感搜索' && searchState.matches.length !== 2) {
+        // 假设测试文本中有2个小写search
+        testPassed = false;
+      }
+      
+      console.log(`测试结果: ${testPassed ? '✓ 通过' : '✗ 失败'}`);
+    }
+    
+    // 运行所有测试
+    function runAllTests() {
+      console.log('====================================');
+      console.log('开始运行所有测试用例');
+      console.log('====================================');
+      
+      let passedCount = 0;
+      const totalTests = testCases.length;
+      
+      // 逐个运行测试用例
+      function runNextTest(index) {
+        if (index >= totalTests) {
+          // 所有测试完成
+          console.log('====================================');
+          console.log(`测试完成: ${passedCount}/${totalTests} 通过`);
+          console.log('====================================');
+          return;
+        }
+        
+        // 运行当前测试
+        runTestCase(index);
+        
+        // 检查是否通过（简化判断）
+        const testCase = testCases[index];
+        let testPassed = true;
+        
+        if (testCase.name === '无匹配搜索') {
+          testPassed = searchState.matches.length === 0;
+        } else if (testCase.name === '大小写敏感搜索') {
+          testPassed = searchState.matches.length > 0;
+        } else {
+          testPassed = searchState.matches.length > 0;
+        }
+        
+        if (testPassed) passedCount++;
+        
+        // 清除高亮，准备下一个测试
+        setTimeout(() => {
+          clearHighlights();
+          runNextTest(index + 1);
+        }, 1000); // 间隔1秒运行下一个测试
+      }
+      
+      // 开始运行第一个测试
+      runNextTest(0);
+    }
+    
+    // 暴露函数供HTML调用
+    window.runTestCase = runTestCase;
+    
+    // 初始化
+    window.addEventListener('DOMContentLoaded', initializeTestUI);
+  </script>
+</body>
+</html>
